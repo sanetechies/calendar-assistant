@@ -1,0 +1,44 @@
+# SAM configuration file
+version = 0.1
+
+[default]
+[default.global]
+[default.global.parameters]
+stack_name = "nextcloud-calendar-api"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+parameter_overrides = [
+    "NextcloudUrl=https://your-nextcloud.com",
+    "NextcloudUsername=your-username"
+]
+
+[default.build]
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy]
+[default.deploy.parameters]
+fail_on_empty_changeset = false
+resolve_s3 = true
+s3_prefix = "nextcloud-calendar-api"
+parameter_overrides = "NextcloudUrl=\"https://your-nextcloud.com\" NextcloudUsername=\"Natasha\""
+image_repositories = []
+disable_rollback = true
+
+[default.package]
+[default.package.parameters]
+s3_prefix = "nextcloud-calendar-ai-v2"
+
+[default.sync]
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api]
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda]
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"
