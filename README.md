@@ -84,6 +84,9 @@ GET https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/slots?duration=6
 
 # Reschedule meeting
 POST https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/reschedule
+
+# Get AI recommendations for conflict resolution
+GET https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/recommendations?date=today
 ```
 
 ### AI Chat Interface
@@ -194,6 +197,21 @@ print(f"Found {events['total']} events")
 # Find slots
 slots = client.find_slots(duration=60, date='tomorrow')
 print(f"Available slots: {slots['available_slots']}")
+
+# Get AI recommendations for conflict resolution
+recommendations = client.get_recommendations(date='today')
+print(f"Conflicts detected: {recommendations['conflicts_detected']}")
+for rec in recommendations['recommendations']:
+    print(f"Recommendation: {rec['reason']}")
+    print(f"Suggested time: {rec['suggested_time']}")
+
+def get_recommendations(self, date='today'):
+    """Get AI recommendations for conflict resolution"""
+    response = requests.get(
+        f'{self.base_url}/recommendations',
+        params={'date': date}
+    )
+    return response.json()
 ```
 
 ### 3. Agent-to-Agent Integration
@@ -347,6 +365,9 @@ curl -X POST https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/events 
     "start_time": "2024-01-15T14:00:00Z",
     "duration": 60
   }'
+
+# Get AI recommendations for conflict resolution
+curl "https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/recommendations?date=today"
 ```
 
 ## 🧪 Test Queries
@@ -357,7 +378,9 @@ curl -X POST https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/events 
 - *"Reschedule my 3 PM meeting to 4 PM"*
 - *"Analyze my calendar this week"*
 - *"Create a team standup for tomorrow at 9 AM"*
-- *"Move all Friday meetings to next week"*  
+- *"Move all Friday meetings to next week"*
+- *"Analyze my calendar conflicts and suggest priority-based rescheduling"*
+- *"What should I reschedule if my doctor appointment conflicts with work?"*  
 
 ## 🔧 Configuration
 

@@ -303,3 +303,116 @@ class CalendarAI:
         }
         
         return analysis
+    
+    def get_recommendations(self, params):
+        """AI-powered recommendations for conflict resolution based on task priority"""
+        date = params.get('date', 'today')
+        
+        # Get events for the specified date
+        events = self.list_events()
+        
+        # Priority mapping based on task importance
+        priority_keywords = {
+            'critical': ['doctor', 'medical', 'hospital', 'emergency', 'baby', 'child', 'pediatrician', 'dentist', 'surgery'],
+            'high': ['family', 'personal', 'appointment', 'interview', 'deadline', 'urgent'],
+            'medium': ['meeting', 'call', 'standup', 'review', 'planning'],
+            'low': ['social', 'optional', 'catch up', 'coffee', 'lunch']
+        }
+        
+        # Analyze events and detect conflicts
+        conflicts = []
+        recommendations = []
+        
+        for i, event1 in enumerate(events['events']):
+            for j, event2 in enumerate(events['events'][i+1:], i+1):
+                if self._events_overlap(event1, event2):
+                    priority1 = self._get_event_priority(event1['title'], priority_keywords)
+                    priority2 = self._get_event_priority(event2['title'], priority_keywords)
+                    
+                    conflicts.append({
+                        'event1': event1,
+                        'event2': event2,
+                        'priority1': priority1,
+                        'priority2': priority2
+                    })
+                    
+                    # Generate recommendation
+                    if priority1['level'] > priority2['level']:
+                        recommendations.append({
+                            'action': 'reschedule',
+                            'move_event': event2,
+                            'keep_event': event1,
+                            'reason': f"{event1['title']} has {priority1['name']} priority ({priority1['reason']}) over {event2['title']} ({priority2['name']} priority)",
+                            'suggested_time': self._suggest_alternative_time(event2, events['events'])
+                        })
+                    elif priority2['level'] > priority1['level']:
+                        recommendations.append({
+                            'action': 'reschedule',
+                            'move_event': event1,
+                            'keep_event': event2,
+                            'reason': f"{event2['title']} has {priority2['name']} priority ({priority2['reason']}) over {event1['title']} ({priority1['name']} priority)",
+                            'suggested_time': self._suggest_alternative_time(event1, events['events'])
+                        })
+        
+        return {
+            'date': date,
+            'conflicts_detected': len(conflicts),
+            'conflicts': conflicts,
+            'recommendations': recommendations,
+            'priority_analysis': {
+                'critical_events': [e for e in events['events'] if self._get_event_priority(e['title'], priority_keywords)['level'] == 4],
+                'high_priority_events': [e for e in events['events'] if self._get_event_priority(e['title'], priority_keywords)['level'] == 3]
+            },
+            'source': 'ai_recommendations'
+        }
+    
+    def _events_overlap(self, event1, event2):
+        """Check if two events overlap in time"""
+        try:
+            start1 = datetime.datetime.fromisoformat(event1['start'].replace('Z', '+00:00'))
+            end1 = datetime.datetime.fromisoformat(event1['end'].replace('Z', '+00:00'))
+            start2 = datetime.datetime.fromisoformat(event2['start'].replace('Z', '+00:00'))
+            end2 = datetime.datetime.fromisoformat(event2['end'].replace('Z', '+00:00'))
+            
+            return start1 < end2 and start2 < end1
+        except:
+            return False
+    
+    def _get_event_priority(self, title, priority_keywords):
+        """Determine event priority based on title keywords"""
+        title_lower = title.lower()
+        
+        for keyword in priority_keywords['critical']:
+            if keyword in title_lower:
+                return {'level': 4, 'name': 'CRITICAL', 'reason': f'Health/family related ({keyword})'}
+        
+        for keyword in priority_keywords['high']:
+            if keyword in title_lower:
+                return {'level': 3, 'name': 'HIGH', 'reason': f'Important personal/professional ({keyword})'}
+        
+        for keyword in priority_keywords['medium']:
+            if keyword in title_lower:
+                return {'level': 2, 'name': 'MEDIUM', 'reason': f'Regular work activity ({keyword})'}
+        
+        for keyword in priority_keywords['low']:
+            if keyword in title_lower:
+                return {'level': 1, 'name': 'LOW', 'reason': f'Social/optional activity ({keyword})'}
+        
+        return {'level': 2, 'name': 'MEDIUM', 'reason': 'Default priority'}
+    
+    def _suggest_alternative_time(self, event, all_events):
+        """Suggest alternative time slots for rescheduling"""
+        try:
+            original_start = datetime.datetime.fromisoformat(event['start'].replace('Z', '+00:00'))
+            duration = datetime.datetime.fromisoformat(event['end'].replace('Z', '+00:00')) - original_start
+            
+            # Suggest times: 1 hour before, 2 hours after, next day same time
+            suggestions = [
+                (original_start - datetime.timedelta(hours=1)).isoformat(),
+                (original_start + datetime.timedelta(hours=2)).isoformat(),
+                (original_start + datetime.timedelta(days=1)).isoformat()
+            ]
+            
+            return suggestions[0]  # Return first suggestion for simplicity
+        except:
+            return None

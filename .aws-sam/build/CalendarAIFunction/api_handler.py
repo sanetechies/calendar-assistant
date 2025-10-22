@@ -49,7 +49,8 @@ def lambda_handler(event, context):
                     'GET /events': 'List calendar events',
                     'POST /events': 'Create calendar event',
                     'GET /slots': 'Find available slots',
-                    'POST /reschedule': 'Reschedule meeting'
+                    'POST /reschedule': 'Reschedule meeting',
+                    'GET /recommendations': 'AI recommendations for conflict resolution'
                 }
             }
         
@@ -65,6 +66,10 @@ def lambda_handler(event, context):
         
         elif path == '/reschedule' and method == 'POST':
             response_data = calendar_ai.reschedule_meeting(body)
+        
+        elif path == '/recommendations' and method == 'GET':
+            params = event.get('queryStringParameters', {}) or {}
+            response_data = calendar_ai.get_recommendations(params)
         
         else:
             response_data = {'error': 'Endpoint not found', 'path': path, 'method': method}
