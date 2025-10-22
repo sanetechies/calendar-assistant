@@ -1,0 +1,23 @@
+{
+  "nextcloud": {
+    "url": "https://your-nextcloud-instance.com",
+    "username": "your-username",
+    "app_password": "your-app-password",
+    "calendar_name": "personal"
+  },
+  "preferences": {
+    "business_hours": {
+      "start": "09:00",
+      "end": "18:00"
+    },
+    "time_zone": "UTC",
+    "default_meeting_duration": 60,
+    "buffer_time": 15
+  },
+  "ai_settings": {
+    "max_suggestions": 3,
+    "prefer_morning": true,
+    "avoid_lunch_hours": true,
+    "respect_focus_time": true
+  }
+}

@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Nextcloud Calendar AI - Lambda + API Gateway
+Parameters:
+  GoogleProjectId:
+    Type: String
+    Default: your-google-project-id
+    Description: Google Cloud Project ID
+  GoogleClientEmail:
+    Type: String
+    Default: your-service-account@project.iam.gserviceaccount.com
+    Description: Google Service Account Email
+Globals:
+  Function:
+    Timeout: 60
+    Runtime: python3.9
+    Environment:
+      Variables:
+        GOOGLE_PROJECT_ID:
+          Ref: GoogleProjectId
+        GOOGLE_CLIENT_EMAIL:
+          Ref: GoogleClientEmail
+        GOOGLE_CALENDAR_ID: primary
+Resources:
+  CalendarAIApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: '''GET,POST,OPTIONS'''
+        AllowHeaders: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+        AllowOrigin: '''*'''
+  CalendarAIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: nextcloud-calendar-ai-api
+      CodeUri: CalendarAIFunction
+      Handler: api_handler.lambda_handler
+      Description: Google Calendar AI API Handler
+      Events:
+        CalendarAPI:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: CalendarAIApi
+            Path: /{proxy+}
+            Method: ANY
+        RootAPI:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: CalendarAIApi
+            Path: /
+            Method: ANY
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          Resource: arn:aws:secretsmanager:us-east-1:*:secret:calendar-ai/google-credentials-*
+    Metadata:
+      SamResourceId: CalendarAIFunction
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: nextcloud-calendar-chat
+      CodeUri: ChatFunction
+      Handler: chat_handler.lambda_handler
+      Description: Calendar AI Chat Interface
+      Events:
+        ChatAPI:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: CalendarAIApi
+            Path: /chat
+            Method: POST
+      Environment:
+        Variables:
+          BEDROCK_MODEL: anthropic.claude-3-5-sonnet-20240620-v1:0
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - bedrock:InvokeModel
+          - bedrock:InvokeModelWithResponseStream
+          Resource: '*'
+        - Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          Resource: arn:aws:secretsmanager:us-east-1:*:secret:calendar-ai/google-credentials-*
+        - Effect: Allow
+          Action:
+          - aws-marketplace:ViewSubscriptions
+          - aws-marketplace:Subscribe
+          - aws-marketplace:Unsubscribe
+          Resource: '*'
+    Metadata:
+      SamResourceId: ChatFunction
+Outputs:
+  CalendarAIApiUrl:
+    Description: Calendar AI API Gateway URL
+    Value:
+      Fn::Sub: https://${CalendarAIApi}.execute-api.${AWS::Region}.amazonaws.com/prod/
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-CalendarAIApiUrl
+  CalendarAIFunctionArn:
+    Description: Calendar AI Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - CalendarAIFunction
+      - Arn
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-CalendarAIFunctionArn
+  ChatEndpoint:
+    Description: Chat API Endpoint
+    Value:
+      Fn::Sub: https://${CalendarAIApi}.execute-api.${AWS::Region}.amazonaws.com/prod/chat
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-ChatEndpoint
