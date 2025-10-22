@@ -21,7 +21,50 @@
 **Chat Endpoint**: `https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/chat`  
 **Lambda Function**: `arn:aws:lambda:us-east-1:525856937873:function:nextcloud-calendar-ai-api`  
 **Stack**: `nextcloud-calendar-api`  
-**Secrets**: `calendar-ai/google-credentials` (AWS Secrets Manager)  
+**Secrets**: `calendar-ai/google-credentials` (AWS Secrets Manager)
+
+## 🤖 **Technology Stack**
+
+### **AI & Machine Learning Technologies**
+
+**Primary AI Engine:**
+- **Amazon Nova** (via AWS Bedrock) - Large Language Model for natural language processing and intelligent calendar operations
+
+**AI Services:**
+- **AWS Bedrock** - Managed AI service platform for LLM integration
+- **Natural Language Processing** - For parsing calendar requests like "Find me a 1-hour slot tomorrow morning"
+- **Intelligent Scheduling AI** - Smart conflict detection and resolution algorithms
+
+### **Core Infrastructure**
+
+**Serverless Computing:**
+- **AWS Lambda** - Serverless function execution
+- **AWS API Gateway** - REST API management and routing
+
+**Security & Storage:**
+- **AWS Secrets Manager** - Secure credential storage
+- **AWS IAM** - Identity and access management
+
+### **Integration Technologies**
+
+**Calendar Backend:**
+- **Google Calendar API** - Calendar data source and management
+- **Google OAuth 2.0** - Authentication and authorization
+
+**Development Stack:**
+- **Python 3.9** - Primary programming language
+- **SAM (Serverless Application Model)** - Infrastructure as Code
+- **CloudFormation** - AWS resource provisioning
+
+### **AI Capabilities Implemented**
+
+- **Conversational AI** - Natural language calendar interactions
+- **Smart Scheduling** - AI-powered time slot recommendations
+- **Conflict Resolution** - Intelligent meeting rescheduling
+- **Calendar Analysis** - Pattern recognition and insights
+- **Multi-modal Integration** - REST API + Chat interface
+
+The system leverages **Amazon Nova's advanced language understanding** to transform natural language requests into precise calendar operations, making it a true AI-powered calendar assistant.  
 
 ## 🔗 API Endpoints
 
