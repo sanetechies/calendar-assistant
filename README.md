@@ -405,7 +405,8 @@ aws cloudformation delete-stack --stack-name nextcloud-calendar-api
 
 **Base URL**: `https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/`  
 **Chat**: `https://eabzln975h.execute-api.us-east-1.amazonaws.com/prod/chat`  
-**Lambda**: `arn:aws:lambda:us-east-1:525856937873:function:nextcloud-calendar-ai-api`
+**Lambda**: `arn:aws:lambda:us-east-1:525856937873:function:nextcloud-calendar-ai-api`  
+**Calendar**: [View Calendar](https://calendar.google.com/calendar/u/1?cid=aHVtYW5lYWV5ZUBnbWFpbC5jb20)
 
 ## 📋 **Current Status**
 

@@ -204,48 +204,78 @@ class CalendarAI:
     
     def reschedule_meeting(self, reschedule_data):
         """Reschedule an existing Google Calendar meeting"""
-        meeting_id = reschedule_data.get('meeting_id', '')
-        new_time = reschedule_data.get('new_time', '')
+        # Handle both event_id and meeting_id parameters
+        event_id = reschedule_data.get('event_id') or reschedule_data.get('meeting_id', '')
+        new_start_time = reschedule_data.get('new_start_time') or reschedule_data.get('new_time', '')
         reason = reschedule_data.get('reason', 'Schedule conflict')
         
-        # Get the existing event
-        event = self.service.events().get(
-            calendarId=self.config['calendar_id'], 
-            eventId=meeting_id
-        ).execute()
+        if not event_id or not new_start_time:
+            return {
+                "success": False,
+                "error": "Missing event_id or new_start_time",
+                "required_fields": ["event_id", "new_start_time"]
+            }
         
-        # Update the start time
-        new_start = datetime.datetime.fromisoformat(new_time.replace('Z', '+00:00'))
-        original_duration = datetime.datetime.fromisoformat(
-            event['end']['dateTime'].replace('Z', '+00:00')
-        ) - datetime.datetime.fromisoformat(
-            event['start']['dateTime'].replace('Z', '+00:00')
-        )
-        new_end = new_start + original_duration
-        
-        event['start']['dateTime'] = new_start.isoformat()
-        event['end']['dateTime'] = new_end.isoformat()
-        
-        # Add reschedule reason to description
-        current_desc = event.get('description', '')
-        event['description'] = f"{current_desc}\n\nRescheduled: {reason}"
-        
-        updated_event = self.service.events().update(
-            calendarId=self.config['calendar_id'],
-            eventId=meeting_id,
-            body=event
-        ).execute()
-        
-        return {
-            "success": True,
-            "meeting_id": meeting_id,
-            "new_time": new_time,
-            "reason": reason,
-            "message": f"Meeting '{event['summary']}' rescheduled to {new_time} in Google Calendar",
-            "conflicts_checked": True,
-            "notifications_sent": True,
-            "source": "google_calendar"
-        }
+        try:
+            # Get the existing event
+            event = self.service.events().get(
+                calendarId=self.config['calendar_id'], 
+                eventId=event_id
+            ).execute()
+            
+            # Parse new start time - handle timezone info
+            if '+' in new_start_time or 'Z' in new_start_time:
+                new_start = datetime.datetime.fromisoformat(new_start_time.replace('Z', '+00:00'))
+            else:
+                new_start = datetime.datetime.fromisoformat(new_start_time)
+            
+            # Calculate original duration
+            original_start = datetime.datetime.fromisoformat(
+                event['start']['dateTime'].replace('Z', '+00:00')
+            )
+            original_end = datetime.datetime.fromisoformat(
+                event['end']['dateTime'].replace('Z', '+00:00')
+            )
+            original_duration = original_end - original_start
+            new_end = new_start + original_duration
+            
+            # Update event times
+            event['start']['dateTime'] = new_start.isoformat()
+            event['end']['dateTime'] = new_end.isoformat()
+            
+            # Add reschedule reason to description
+            current_desc = event.get('description', '')
+            event['description'] = f"{current_desc}\n\nRescheduled: {reason}"
+            
+            # Update the event
+            updated_event = self.service.events().update(
+                calendarId=self.config['calendar_id'],
+                eventId=event_id,
+                body=event
+            ).execute()
+            
+            return {
+                "success": True,
+                "event_id": event_id,
+                "new_start_time": new_start_time,
+                "reason": reason,
+                "message": f"Event '{event['summary']}' rescheduled to {new_start_time}",
+                "updated_event": {
+                    "id": updated_event['id'],
+                    "title": updated_event['summary'],
+                    "start": updated_event['start']['dateTime'],
+                    "end": updated_event['end']['dateTime']
+                },
+                "source": "google_calendar"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "event_id": event_id,
+                "new_start_time": new_start_time
+            }
     
 
     
